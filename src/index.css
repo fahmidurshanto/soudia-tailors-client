@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
-/* Add this to your global CSS file */
+/* Custom scrollbar */
 .custom-scrollbar::-webkit-scrollbar {
-    width: 8px;
+    width: 6px;
   }
   
   .custom-scrollbar::-webkit-scrollbar-track {
@@ -19,6 +19,19 @@
     background: #a5b4fc;
   }
   
+  /* Hide Tldraw debug panel */
   .tldraw__container .tlui-debug-panel {
     display: none !important;
   }
+  
+  /* Responsive design */
+  @media (max-width: 1024px) {
+    .lg\:hidden {
+      display: flex !important;
+    }
+    
+    .lg\:flex {
+      display: none !important;
+    }
+  }
+  
