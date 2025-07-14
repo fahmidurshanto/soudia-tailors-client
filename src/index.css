@@ -1,13 +1,11 @@
-@import 'tailwindcss/base';
-@import 'tailwindcss/components';
-@import 'tailwindcss/utilities';
+@import "tailwindcss";
 
 @layer base {
   body {
-    @apply font-sans text-text bg-light leading-relaxed;
+    @apply font-sans  leading-relaxed;
   }
   h1, h2, h3, h4, h5, h6 {
-    @apply font-bold text-dark;
+    @apply font-bold ;
   }
   h1 {
     @apply text-4xl;

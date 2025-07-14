@@ -1,8 +1,19 @@
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
-import tailwindcss from '@tailwindcss/vite';
+// vite.config.js
+import tailwindcss from '@tailwindcss/vite'
+import { defineConfig } from 'vite'
 
-// https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
-});
+  plugins: [
+    tailwindcss({
+      /* inline Tailwind config goes here */
+      theme: {
+        extend: {
+          colors: {
+            light: '#fafafa',   // <─ define missing colour
+            dark:  '#111827',   // <─ define missing colour
+          },
+        },
+      },
+    }),
+  ],
+})
