@@ -1,11 +1,24 @@
+import React from 'react';
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import Layout from './components/Layout';
+import Home from './pages/Home';
+import Measurement from './pages/Measurement';
+import Contact from './pages/Contact';
 
-function App() {
+const router = createBrowserRouter([
+  {
+    path: '/',
+    element: <Layout />,
+    children: [
+      { path: '/', element: <Home /> },
+      { path: '/measurement', element: <Measurement /> },
+      { path: '/contact', element: <Contact /> },
+    ],
+  },
+]);
 
-  return (
-    <>
-     <h1 className='uppercase text-4xl text-violet-700 font-bold'>Soudia Tailors</h1>
-    </>
-  )
-}
+const App = () => {
+  return <RouterProvider router={router} />;
+};
 
-export default App
+export default App;

@@ -1,37 +1,27 @@
-@import "tailwindcss";
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
 
-/* Custom scrollbar */
-.custom-scrollbar::-webkit-scrollbar {
-    width: 6px;
+@layer base {
+  body {
+    @apply font-sans text-text bg-light leading-relaxed;
   }
-  
-  .custom-scrollbar::-webkit-scrollbar-track {
-    background: #f1f5f9;
-    border-radius: 4px;
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-bold text-dark;
   }
-  
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: #c7d2fe;
-    border-radius: 4px;
+  h1 {
+    @apply text-4xl;
   }
-  
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #a5b4fc;
+  h2 {
+    @apply text-3xl;
   }
-  
-  /* Hide Tldraw debug panel */
-  .tldraw__container .tlui-debug-panel {
-    display: none !important;
+  h3 {
+    @apply text-2xl;
   }
-  
-  /* Responsive design */
-  @media (max-width: 1024px) {
-    .lg\:hidden {
-      display: flex !important;
-    }
-    
-    .lg\:flex {
-      display: none !important;
-    }
+  p {
+    @apply mb-4;
   }
-  
+  a, button, input[type="text"], input[type="email"], input[type="tel"], input[type="file"], textarea {
+    @apply transition-all duration-300 ease-in-out;
+  }
+}
