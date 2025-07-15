@@ -1,11 +1,12 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { Tldraw, useEditor, getSvgAsImage } from '@tldraw/tldraw';
 import '@tldraw/tldraw/tldraw.css';
 import Swal from 'sweetalert2';
 
-/* ---------- Whiteboard helpers ---------- */
-const WhiteboardContent = () => {
+const WhiteboardContent = React.forwardRef((props, ref) => {
   const editor = useEditor();
+  React.useImperativeHandle(ref, () => ({ editor }));
+
   const handleExport = async () => {
     if (!editor) return;
     const { isConfirmed } = await Swal.fire({
@@ -52,30 +53,90 @@ const WhiteboardContent = () => {
       এক্সপোর্ট করুন
     </button>
   );
-};
+});
 
-const Whiteboard = () => (
+const Whiteboard = React.forwardRef((props, ref) => (
   <div className="w-full h-full">
     <Tldraw>
-      <WhiteboardContent />
+      <WhiteboardContent ref={ref} />
     </Tldraw>
   </div>
-);
+));
 
-/* ---------- Measurement form ---------- */
 const Measurement = () => {
-  const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [chest, setChest] = useState('');
-  const [waist, setWaist] = useState('');
-  const [sleeve, setSleeve] = useState('');
-  const [pants, setPants] = useState('');
-  const [photo, setPhoto] = useState(null);
+  const initialFormState = {
+    name: '',
+    phone: '',
+    lomba: '',
+    body: '',
+    komor: '',
+    hip: '',
+    put: '',
+    haterLomba: '',
+    haterMukh: '',
+    nicherGher: '',
+  };
+  const [formData, setFormData] = useState(initialFormState);
   const [stream, setStream] = useState(null);
   const [capturedImage, setCapturedImage] = useState(null);
 
-  const videoRef = React.useRef(null);
-  const canvasRef = React.useRef(null);
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
+  const whiteboardRef = useRef(null);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSave = async () => {
+    if (!formData.phone) {
+      Swal.fire('ত্রুটি!', 'ফোন নাম্বার আবশ্যক।', 'error');
+      return;
+    }
+
+    let whiteboardSvg = null;
+    if (whiteboardRef.current && whiteboardRef.current.editor) {
+      const editor = whiteboardRef.current.editor;
+      if (editor.currentPageShapeIds) {
+        const svg = await editor.getSvg(Array.from(editor.currentPageShapeIds));
+        if (svg) {
+          const image = await getSvgAsImage(svg, { type: 'png', quality: 1, scale: 1 });
+          whiteboardSvg = URL.createObjectURL(new Blob([image], { type: 'image/png' }));
+        }
+      }
+    }
+
+    const newOrder = {
+      id: `ORD-${Date.now()}`,
+      customer: {
+        name: formData.name || 'N/A',
+        phone: formData.phone,
+      },
+      measurements: {
+        lomba: formData.lomba ? `${formData.lomba}"` : 'N/A',
+        body: formData.body ? `${formData.body}"` : 'N/A',
+        komor: formData.komor ? `${formData.komor}"` : 'N/A',
+        hip: formData.hip ? `${formData.hip}"` : 'N/A',
+        put: formData.put ? `${formData.put}"` : 'N/A',
+        haterLomba: formData.haterLomba ? `${formData.haterLomba}"` : 'N/A',
+        haterMukh: formData.haterMukh ? `${formData.haterMukh}"` : 'N/A',
+        nicherGher: formData.nicherGher ? `${formData.nicherGher}"` : 'N/A',
+      },
+      pricing: { total: 0, paid: 0, due: 0 },
+      status: 'In Progress',
+      orderDate: new Date().toISOString().split('T')[0],
+      capturedImage: capturedImage,
+      whiteboardSvg: whiteboardSvg,
+    };
+
+    const existingOrders = JSON.parse(localStorage.getItem('orders')) || [];
+    localStorage.setItem('orders', JSON.stringify([...existingOrders, newOrder]));
+
+    Swal.fire('সফল!', 'অর্ডার সফলভাবে সেভ হয়েছে।', 'success');
+    setFormData(initialFormState);
+    setCapturedImage(null);
+  };
 
   const startCamera = async () => {
     try {
@@ -83,12 +144,7 @@ const Measurement = () => {
       setStream(mediaStream);
       if (videoRef.current) videoRef.current.srcObject = mediaStream;
     } catch {
-      Swal.fire({
-        title: 'ক্যামেরা অ্যাক্সেস ত্রুটি!',
-        text: 'অনুগ্রহ করে ব্রাউজার অনুমতি দিন।',
-        icon: 'error',
-        confirmButtonText: 'ঠিক আছে',
-      });
+      Swal.fire('ক্যামেরা অ্যাক্সেস ত্রুটি!', 'অনুগ্রহ করে ব্রাউজার অনুমতি দিন।', 'error');
     }
   };
 
@@ -96,7 +152,6 @@ const Measurement = () => {
     if (stream) {
       stream.getTracks().forEach((t) => t.stop());
       setStream(null);
-      setCapturedImage(null);
     }
   }, [stream]);
 
@@ -109,181 +164,81 @@ const Measurement = () => {
       const ctx = c.getContext('2d');
       ctx.drawImage(v, 0, 0);
       setCapturedImage(c.toDataURL('image/png'));
+      stopCamera();
     }
   };
 
-  const handleSave = () => {
-    if (!phone) {
-      Swal.fire('ত্রুটি!', 'ফোন নাম্বার আবশ্যক।', 'error');
-      return;
-    }
+  useEffect(() => () => stopCamera(), [stopCamera]);
 
-    const newOrder = {
-      id: `ORD-${Date.now()}`,
-      customer: {
-        name: name || 'N/A',
-        phone,
-      },
-      measurements: {
-        chest: chest ? `${chest}"` : 'N/A',
-        waist: waist ? `${waist}"` : 'N/A',
-        sleeve: sleeve ? `${sleeve}"` : 'N/A',
-        pants: pants ? `${pants}"` : 'N/A',
-      },
-      pricing: {
-        total: 0, // Placeholder
-        paid: 0,
-        due: 0,
-      },
-      status: 'In Progress',
-      orderDate: new Date().toISOString().split('T')[0],
-      // capturedImage can be added here if needed
-    };
-
-    const existingOrders = JSON.parse(localStorage.getItem('orders')) || [];
-    localStorage.setItem('orders', JSON.stringify([...existingOrders, newOrder]));
-
-    Swal.fire('সফল!', 'অর্ডার সফলভাবে সেভ হয়েছে।', 'success');
-
-    // Clear form
-    setName('');
-    setPhone('');
-    setChest('');
-    setWaist('');
-    setSleeve('');
-    setPants('');
-    setCapturedImage(null);
-  };
+  const inputFields = [
+    { name: 'lomba', label: 'লম্বার মাপ (ইঞ্চি)' },
+    { name: 'body', label: 'বডি মাপ (ইঞ্চি)' },
+    { name: 'komor', label: 'কোমরের মাপ (ইঞ্চি)' },
+    { name: 'hip', label: 'হিপের মাপ (ইঞ্চি)' },
+    { name: 'put', label: 'পুট মাপ (ইঞ্চি)' },
+    { name: 'haterLomba', label: 'হাতে লম্বা (ইঞ্চি)' },
+    { name: 'haterMukh', label: 'হাতের মুখ (ইঞ্চি)' },
+    { name: 'nicherGher', label: 'নিচের ঘের (ইঞ্চি)' },
+    { name: 'name', label: 'গ্রাহকের নাম (ঐচ্ছিক)' },
+    { name: 'phone', label: 'ফোন নাম্বার (আবশ্যক)' },
+  ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4">
       <div className="container mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Form Card */}
-        <div className="lg:col-span-1 animate__animated animate__fadeInUp">
+        <div className="lg:col-span-1">
           <h2 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500 mb-6">
             মাপ ও গ্রাহকের তথ্য
           </h2>
-
           <form className="bg-slate-800/50 backdrop-blur-md rounded-xl p-6 shadow-2xl space-y-5">
-            {/* Larger floating-label inputs */}
-            {[
-              { value: chest, set: setChest, label: 'বুকের মাপ (ইঞ্চি)' },
-              { value: waist, set: setWaist, label: 'কোমরের মাপ (ইঞ্চি)' },
-              { value: sleeve, set: setSleeve, label: 'হাতার দৈর্ঘ্য (ইঞ্চি)' },
-              { value: pants, set: setPants, label: 'প্যান্টের মাপ (ইঞ্চি)' },
-              { value: name, set: setName, label: 'গ্রাহকের নাম (ঐচ্ছিক)' },
-              { value: phone, set: setPhone, label: 'ফোন নাম্বার (আবশ্যক)' },
-            ].map(({ value, set, label }) => (
-              <div key={label} className="relative">
+            {inputFields.map(({ name, label }) => (
+              <div key={name} className="relative">
                 <input
-                  value={value}
-                  onChange={(e) => set(e.target.value)}
+                  name={name}
+                  value={formData[name]}
+                  onChange={handleChange}
                   placeholder=" "
-                  className="peer w-full bg-slate-700/40 text-white rounded-lg px-4 pt-7 pb-3
-                             border border-slate-600 focus:outline-none focus:border-purple-500
-                             focus:ring-2 focus:ring-purple-500 transition"
+                  className="peer w-full bg-slate-700/40 text-white rounded-lg px-4 pt-7 pb-3 border border-slate-600 focus:outline-none focus:border-purple-500 transition"
                 />
-                <label className="absolute left-4 top-1 text-base font-bold text-purple-300 scale-75
-                                 peer-placeholder-shown:top-1/2 peer-placeholder-shown:text-lg
-                                 peer-placeholder-shown:text-slate-400
-                                 peer-focus:top-1 peer-focus:text-base peer-focus:text-purple-300
-                                 transition-all duration-200">
+                <label className="absolute left-4 top-1 text-base font-bold text-purple-300 scale-75 peer-placeholder-shown:top-1/2 peer-placeholder-shown:text-lg peer-placeholder-shown:text-slate-400 peer-focus:top-1 peer-focus:text-base peer-focus:text-purple-300 transition-all duration-200">
                   {label}
                 </label>
               </div>
             ))}
-
-            {/* File upload */}
-            <div>
-              <label className="block text-base font-bold text-slate-300 mb-1">ছবি আপলোড (ঐচ্ছিক)</label>
-              <input
-                type="file"
-                accept="image/*"
-                capture
-                onChange={(e) => setPhoto(e.target.files[0])}
-                className="w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4
-                           file:rounded-full file:border-0
-                           file:text-sm file:font-semibold
-                           file:bg-purple-500 file:text-white
-                           hover:file:bg-purple-600 transition"
-              />
-            </div>
-
-            {/* Camera section */}
-            <div>
-              <label className="block text-base font-bold text-slate-300 mb-2">ক্যামেরা থেকে ছবি</label>
-              {!stream ? (
-                <button
-                  type="button"
-                  onClick={startCamera}
-                  className="w-full bg-gradient-to-r from-green-400 to-cyan-500
-                             text-white font-semibold py-2.5 rounded-lg shadow-md
-                             hover:scale-105 transition-transform duration-300"
-                >
+            
+            {/* Camera Section */}
+            <div className="space-y-3">
+              <label className="block text-base font-bold text-slate-300">ক্যামেরা থেকে ছবি</label>
+              {!stream && !capturedImage && (
+                <button type="button" onClick={startCamera} className="w-full bg-gradient-to-r from-green-400 to-cyan-500 text-white font-semibold py-2.5 rounded-lg">
                   ক্যামেরা চালু করুন
                 </button>
-              ) : (
-                <>
-                  <video
-                    ref={videoRef}
-                    autoPlay
-                    playsInline
-                    className="w-full h-60 rounded-lg object-cover bg-black mb-2"
-                  />
+              )}
+              {stream && (
+                <div className="space-y-3">
+                  <video ref={videoRef} autoPlay playsInline className="w-full h-60 rounded-lg object-cover bg-black" />
                   <div className="flex gap-3">
-                    <button
-                      type="button"
-                      onClick={capturePhoto}
-                      className="flex-1 bg-gradient-to-r from-pink-500 to-red-500
-                                 text-white font-semibold py-2.5 rounded-lg shadow-md
-                                 hover:scale-105 transition-transform duration-300"
-                    >
-                      ছবি তুলুন
-                    </button>
-                    <button
-                      type="button"
-                      onClick={stopCamera}
-                      className="flex-1 bg-gradient-to-r from-slate-600 to-slate-700
-                                 text-white font-semibold py-2.5 rounded-lg shadow-md
-                                 hover:scale-105 transition-transform duration-300"
-                    >
-                      বন্ধ করুন
-                    </button>
+                    <button type="button" onClick={capturePhoto} className="flex-1 bg-pink-500 text-white font-semibold py-2.5 rounded-lg">ছবি তুলুন</button>
+                    <button type="button" onClick={stopCamera} className="flex-1 bg-slate-600 text-white font-semibold py-2.5 rounded-lg">বন্ধ করুন</button>
                   </div>
-                </>
+                </div>
               )}
               {capturedImage && (
                 <div className="mt-4">
-                  <img
-                    src={capturedImage}
-                    alt="Captured"
-                    className="w-full h-auto rounded-lg border border-slate-600"
-                  />
+                  <img src={capturedImage} alt="Captured" className="w-full h-auto rounded-lg border border-slate-600" />
                   <canvas ref={canvasRef} className="hidden" />
+                  <button type="button" onClick={() => setCapturedImage(null)} className="w-full mt-2 bg-red-500 text-white font-semibold py-2 rounded-lg">মুছুন</button>
                 </div>
               )}
             </div>
 
-            {/* Save button */}
-            <button
-              type="button"
-              onClick={handleSave}
-              className="w-full bg-gradient-to-r from-purple-600 to-indigo-600
-                         text-white font-bold py-3 rounded-lg shadow-xl
-                         hover:scale-105 transition-transform duration-300"
-            >
+            <button type="button" onClick={handleSave} className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold py-3 rounded-lg shadow-xl hover:scale-105 transition-transform">
               সেভ করুন
             </button>
           </form>
         </div>
-
-        {/* Whiteboard */}
-        <div
-          className="lg:col-span-2 h-[500px] md:h-[600px] lg:h-[700px]
-                     bg-slate-800/40 backdrop-blur-md rounded-xl shadow-2xl
-                     animate__animated animate__fadeInRight overflow-hidden"
-        >
-          <Whiteboard />
+        <div className="lg:col-span-2 h-[500px] md:h-[600px] lg:h-[700px] bg-slate-800/40 backdrop-blur-md rounded-xl shadow-2xl overflow-hidden">
+          <Whiteboard ref={whiteboardRef} />
         </div>
       </div>
     </div>

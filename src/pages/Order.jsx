@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import Swal from 'sweetalert2';
 import { FiUser, FiPhone, FiEdit, FiPrinter, FiTrash2 } from 'react-icons/fi';
 
-// Edit Modal Component
 const EditModal = ({ order, onSave, onClose }) => {
   const [formData, setFormData] = useState(order);
 
@@ -45,7 +44,6 @@ const EditModal = ({ order, onSave, onClose }) => {
   );
 };
 
-// Order Card Component
 const OrderCard = ({ order, onUpdate, onDelete }) => {
   const [isEditing, setIsEditing] = useState(false);
 
@@ -60,6 +58,7 @@ const OrderCard = ({ order, onUpdate, onDelete }) => {
             .logo h1 { font-size: 2.5rem; font-weight: 800; background: -webkit-linear-gradient(left, #ec4899, #8b5cf6, #6366f1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
             h1 { color: #6a0dad; border-bottom: 2px solid #eee; padding-bottom: 10px; }
             h2 { color: #4a4a4a; margin-top: 20px; }
+            .measurements { column-count: 2; }
           </style>
         </head>
         <body>
@@ -71,6 +70,17 @@ const OrderCard = ({ order, onUpdate, onDelete }) => {
           <h2>Customer Details</h2>
           <p><strong>Name:</strong> ${order.customer.name}</p>
           <p><strong>Phone:</strong> ${order.customer.phone}</p>
+          <h2>Measurements</h2>
+          <div class="measurements">
+            <p><strong>লম্বার মাপ:</strong> ${order.measurements.lomba}</p>
+            <p><strong>বডি মাপ:</strong> ${order.measurements.body}</p>
+            <p><strong>কোমরের মাপ:</strong> ${order.measurements.komor}</p>
+            <p><strong>হিপের মাপ:</strong> ${order.measurements.hip}</p>
+            <p><strong>পুট মাপ:</strong> ${order.measurements.put}</p>
+            <p><strong>হাতে লম্বা:</strong> ${order.measurements.haterLomba}</p>
+            <p><strong>হাতের মুখ:</strong> ${order.measurements.haterMukh}</p>
+            <p><strong>নিচের ঘের:</strong> ${order.measurements.nicherGher}</p>
+          </div>
           <h2>Pricing</h2>
           <p><strong>Total:</strong> ৳${order.pricing.total}</p>
           <p><strong>Paid:</strong> ৳${order.pricing.paid}</p>
@@ -101,19 +111,44 @@ const OrderCard = ({ order, onUpdate, onDelete }) => {
           </div>
         </div>
         <div className="border-t border-slate-700 pt-4">
+          <h3 className="text-lg font-bold text-slate-200 mb-3">Measurements</h3>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-slate-300">
+            <p><span className="font-semibold text-slate-400">লম্বার মাপ:</span> {order.measurements.lomba}</p>
+            <p><span className="font-semibold text-slate-400">বডি মাপ:</span> {order.measurements.body}</p>
+            <p><span className="font-semibold text-slate-400">কোমরের মাপ:</span> {order.measurements.komor}</p>
+            <p><span className="font-semibold text-slate-400">হিপের মাপ:</span> {order.measurements.hip}</p>
+            <p><span className="font-semibold text-slate-400">পুট মাপ:</span> {order.measurements.put}</p>
+            <p><span className="font-semibold text-slate-400">হাতে লম্বা:</span> {order.measurements.haterLomba}</p>
+            <p><span className="font-semibold text-slate-400">হাতের মুখ:</span> {order.measurements.haterMukh}</p>
+            <p><span className="font-semibold text-slate-400">নিচের ঘের:</span> {order.measurements.nicherGher}</p>
+          </div>
+        </div>
+        {order.capturedImage && (
+          <div className="border-t border-slate-700 pt-4">
+            <h3 className="text-lg font-bold text-slate-200 mb-3">Captured Image</h3>
+            <img src={order.capturedImage} alt="Captured" className="w-full h-auto rounded-lg border border-slate-600" />
+          </div>
+        )}
+        {order.whiteboardSvg && (
+          <div className="border-t border-slate-700 pt-4">
+            <h3 className="text-lg font-bold text-slate-200 mb-3">Whiteboard Drawing</h3>
+            <img src={order.whiteboardSvg} alt="Whiteboard" className="w-full h-auto rounded-lg border border-slate-600" />
+          </div>
+        )}
+        <div className="border-t border-slate-700 pt-4">
           <h3 className="text-lg font-bold text-slate-200 mb-3">Pricing</h3>
           <div className="flex justify-between items-center text-slate-300">
             <div className="text-center">
               <p className="text-xs text-slate-400">Total</p>
-              <p className="font-bold text-xl text-green-400">৳${order.pricing.total}</p>
+              <p className="font-bold text-xl text-green-400">৳{order.pricing.total}</p>
             </div>
             <div className="text-center">
               <p className="text-xs text-slate-400">Paid</p>
-              <p className="font-bold text-xl text-cyan-400">৳${order.pricing.paid}</p>
+              <p className="font-bold text-xl text-cyan-400">৳{order.pricing.paid}</p>
             </div>
             <div className="text-center">
               <p className="text-xs text-slate-400">Due</p>
-              <p className="font-bold text-xl text-red-400">৳${order.pricing.due}</p>
+              <p className="font-bold text-xl text-red-400">৳{order.pricing.due}</p>
             </div>
           </div>
         </div>
@@ -128,13 +163,12 @@ const OrderCard = ({ order, onUpdate, onDelete }) => {
   );
 };
 
-// Main Order Page Component
 const Order = () => {
   const [orders, setOrders] = useState([]);
 
   const fetchOrders = useCallback(() => {
     const storedOrders = JSON.parse(localStorage.getItem('orders')) || [];
-    setOrders(storedOrders.sort((a, b) => b.id.localeCompare(a.id))); // Sort by ID descending
+    setOrders(storedOrders.sort((a, b) => b.id.localeCompare(a.id)));
   }, []);
 
   useEffect(() => {
