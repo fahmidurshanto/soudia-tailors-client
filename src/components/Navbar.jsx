@@ -19,6 +19,7 @@ const Navbar = () => {
           {/* Brand */}
           <NavLink
             to="/"
+            id="site-logo"
             className="text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-pink-500 via-purple-400 to-indigo-200
                        hover:scale-105 transform transition-transform duration-300"
           >
