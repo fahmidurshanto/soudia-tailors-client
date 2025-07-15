@@ -4,6 +4,7 @@ import Layout from './components/Layout';
 import Home from './pages/Home';
 import Measurement from './pages/Measurement';
 import Contact from './pages/Contact';
+import Order from './pages/Order';
 
 const router = createBrowserRouter([
   {
@@ -13,6 +14,7 @@ const router = createBrowserRouter([
       { path: '/', element: <Home /> },
       { path: '/measurement', element: <Measurement /> },
       { path: '/contact', element: <Contact /> },
+      { path: '/order', element: <Order /> },
     ],
   },
 ]);

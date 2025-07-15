@@ -33,6 +33,9 @@ const Navbar = () => {
             <NavLink to="/contact" className={linkClass}>
               যোগাযোগ
             </NavLink>
+            <NavLink to="/order" className={linkClass}>
+              অর্ডার
+            </NavLink>
           </div>
 
           {/* React Icon hamburger/close */}
@@ -73,14 +76,30 @@ const Navbar = () => {
               to="/contact"
               className={({ isActive }) =>
                 `block px-4 py-3 rounded-lg text-base font-medium transition-all duration-300
-                ${isActive
-                  ? 'bg-gradient-to-r from-pink-500 to-yellow-500 text-white shadow-lg shadow-pink-500/40'
-                  : 'text-slate-200 hover:bg-white/10 hover:text-white'
+                ${
+                  isActive
+                    ? 'bg-gradient-to-r from-pink-500 to-yellow-500 text-white shadow-lg shadow-pink-500/40'
+                    : 'text-slate-200 hover:bg-white/10 hover:text-white'
                 }`
               }
               onClick={() => setIsOpen(false)}
             >
               যোগাযোগ
+            </NavLink>
+
+            <NavLink
+              to="/order"
+              className={({ isActive }) =>
+                `block px-4 py-3 rounded-lg text-base font-medium transition-all duration-300
+                ${
+                  isActive
+                    ? 'bg-gradient-to-r from-pink-500 to-yellow-500 text-white shadow-lg shadow-pink-500/40'
+                    : 'text-slate-200 hover:bg-white/10 hover:text-white'
+                }`
+              }
+              onClick={() => setIsOpen(false)}
+            >
+              অর্ডার
             </NavLink>
           </div>
         </div>
