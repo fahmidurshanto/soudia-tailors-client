@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { FiUser, FiPhone, FiClipboard, FiDollarSign, FiCheckCircle, FiClock } from 'react-icons/fi';
 
 // Mock data for orders - in a real app, this would come from an API
@@ -146,6 +146,12 @@ const OrderCard = ({ order }) => {
 };
 
 const Order = () => {
+  const [orders, setOrders] = useState([]);
+
+  useEffect(() => {
+    const storedOrders = JSON.parse(localStorage.getItem('orders')) || [];
+    setOrders(storedOrders.reverse()); // Show newest first
+  }, []);
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4">
       <div className="container mx-auto">
@@ -154,9 +160,16 @@ const Order = () => {
         </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {mockOrders.map((order) => (
-            <OrderCard key={order.id} order={order} />
-          ))}
+          {orders.length > 0 ? (
+            orders.map((order) => (
+              <OrderCard key={order.id} order={order} />
+            ))
+          ) : (
+            <div className="col-span-full text-center py-12">
+              <p className="text-2xl text-slate-400">কোনো অর্ডার পাওয়া যায়নি।</p>
+              <p className="text-slate-500">নতুন অর্ডার যোগ করতে মেজারমেন্ট পেজে যান।</p>
+            </div>
+          )}
         </div>
       </div>
     </div>

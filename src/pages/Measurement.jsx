@@ -112,7 +112,48 @@ const Measurement = () => {
     }
   };
 
-  React.useEffect(() => () => stopCamera(), [stopCamera]);
+  const handleSave = () => {
+    if (!phone) {
+      Swal.fire('ত্রুটি!', 'ফোন নাম্বার আবশ্যক।', 'error');
+      return;
+    }
+
+    const newOrder = {
+      id: `ORD-${Date.now()}`,
+      customer: {
+        name: name || 'N/A',
+        phone,
+      },
+      measurements: {
+        chest: chest ? `${chest}"` : 'N/A',
+        waist: waist ? `${waist}"` : 'N/A',
+        sleeve: sleeve ? `${sleeve}"` : 'N/A',
+        pants: pants ? `${pants}"` : 'N/A',
+      },
+      pricing: {
+        total: 0, // Placeholder
+        paid: 0,
+        due: 0,
+      },
+      status: 'In Progress',
+      orderDate: new Date().toISOString().split('T')[0],
+      // capturedImage can be added here if needed
+    };
+
+    const existingOrders = JSON.parse(localStorage.getItem('orders')) || [];
+    localStorage.setItem('orders', JSON.stringify([...existingOrders, newOrder]));
+
+    Swal.fire('সফল!', 'অর্ডার সফলভাবে সেভ হয়েছে।', 'success');
+
+    // Clear form
+    setName('');
+    setPhone('');
+    setChest('');
+    setWaist('');
+    setSleeve('');
+    setPants('');
+    setCapturedImage(null);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4">
@@ -226,6 +267,7 @@ const Measurement = () => {
             {/* Save button */}
             <button
               type="button"
+              onClick={handleSave}
               className="w-full bg-gradient-to-r from-purple-600 to-indigo-600
                          text-white font-bold py-3 rounded-lg shadow-xl
                          hover:scale-105 transition-transform duration-300"
