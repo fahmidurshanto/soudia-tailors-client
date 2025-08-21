@@ -1,5 +1,6 @@
 // HeroSection.jsx
 import { FaClipboardList } from 'react-icons/fa';
+import { Link } from 'react-router-dom';
 
 const HeroSection = () => {
   return (
@@ -10,19 +11,14 @@ const HeroSection = () => {
             <FaClipboardList className="h-12 w-12 text-purple-600" />
           </div>
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-purple-900 mb-6">
-            বোরখা অর্ডার ব্যবস্থাপনা সিস্টেম
+            সৌদিয়া লেডিস টেইলার্স
           </h1>
-          <p className="text-lg md:text-xl text-gray-700 max-w-2xl mb-8">
-            দোকানদারদের জন্য বিশেষভাবে তৈরি অর্ডার ব্যবস্থাপনা সিস্টেম। 
-            এখন সহজেই নিতে পারেন কাস্টমারদের অর্ডার, মাপ এবং ডিজাইন রেফারেন্স।
-          </p>
+          <p className="text-lg md:text-xl text-gray-700 max-w-2xl mb-8">অর্ডার ব্যবস্থাপনা সিস্টেম</p>
           <div className="flex flex-col sm:flex-row gap-4">
-            <button className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-8 rounded-full shadow-lg transition duration-300 flex items-center justify-center">
+            <Link to="/order" className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-8 rounded-full shadow-lg transition duration-300 flex items-center justify-center">
               নতুন অর্ডার তৈরি করুন
-            </button>
-            <button className="border border-purple-600 text-purple-600 hover:bg-purple-50 font-semibold py-3 px-8 rounded-full transition duration-300">
-              ডেমো দেখুন
-            </button>
+            </Link>
+       
           </div>
         </div>
       </div>

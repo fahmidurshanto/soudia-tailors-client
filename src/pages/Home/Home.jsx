@@ -1,4 +1,3 @@
-import CTASection from "./Sections/CTASection";
 import FeaturesSection from "./Sections/FeaturesSection";
 import HeroSection from "./Sections/HeroSection";
 import HowItWorks from "./Sections/HowItWorks";
@@ -11,7 +10,6 @@ const Home = () => {
       <FeaturesSection />
       <HowItWorks />
       <SecuritySection />
-      <CTASection />
     </div>
   );
 };
