@@ -28,12 +28,12 @@ const FeaturesSection = () => {
   return (
     <section className="py-16 bg-white">
       <div className="container mx-auto px-4">
-        <h2 className="text-3xl font-bold text-center text-purple-900 mb-12">
+        <h2 className="text-3xl font-bold text-center text-purple-900 mb-12" data-aos="fade-up">
           সিস্টেমের বিশেষ সুবিধাসমূহ
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {features.map((feature, index) => (
-            <div key={index} className="text-center p-6 rounded-lg bg-purple-50 hover:shadow-md transition-shadow duration-300">
+            <div key={index} className="text-center p-6 rounded-lg bg-purple-50 hover:shadow-md transition-shadow duration-300" data-aos="zoom-in" data-aos-delay={index * 100}>
               <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 {feature.icon}
               </div>

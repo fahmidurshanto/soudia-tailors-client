@@ -57,12 +57,12 @@ const OrderPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gray-50 py-8 animate__animated animate__fadeIn">
       <div className="container mx-auto px-4 max-w-4xl">
-        <h1 className="text-3xl font-bold text-center text-purple-900 mb-2">
+        <h1 className="text-3xl font-bold text-center text-purple-900 mb-2" data-aos="fade-down">
           নতুন অর্ডার
         </h1>
-        <p className="text-center text-gray-600 mb-8">
+        <p className="text-center text-gray-600 mb-8" data-aos="fade-up">
           গ্রাহকের তথ্য, মাপ এবং ডিজাইন রেফারেন্স যোগ করুন
         </p>
 

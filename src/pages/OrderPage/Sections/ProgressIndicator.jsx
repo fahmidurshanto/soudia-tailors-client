@@ -11,7 +11,7 @@ const ProgressIndicator = ({ sections, activeSection }) => {
   };
 
   return (
-    <div className="mb-10">
+    <div className="mb-10" data-aos="fade-down">
       <div className="flex justify-between items-center mb-4">
         {sections.map((section, index) => (
           <div key={index} className="flex flex-col items-center">

@@ -1,5 +1,3 @@
-
-
 const CustomerInfoSection = ({ customerData, setCustomerData }) => {
   const handleInputChange = (e) => {
     setCustomerData({
@@ -9,7 +7,7 @@ const CustomerInfoSection = ({ customerData, setCustomerData }) => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate__animated animate__fadeInLeft">
       <h2 className="text-2xl font-semibold text-purple-800 mb-4">গ্রাহকের তথ্য</h2>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

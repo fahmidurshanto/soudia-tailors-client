@@ -27,19 +27,19 @@ const ContactPage = () => {
   const position = [25.10279483729949, 89.0257758976146];
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gray-50 py-8 animate__animated animate__fadeIn">
       <div className="container mx-auto px-4 max-w-4xl">
-        <h1 className="text-3xl font-bold text-center text-purple-900 mb-2">
+        <h1 className="text-3xl font-bold text-center text-purple-900 mb-2" data-aos="fade-down">
           আমাদের সাথে যোগাযোগ করুন
         </h1>
-        <p className="text-center text-gray-600 mb-8">
+        <p className="text-center text-gray-600 mb-8" data-aos="fade-up">
           যেকোনো প্রয়োজনে আমাদের সাথে যোগাযোগ করতে পারেন
         </p>
 
         <div className="bg-white rounded-lg shadow-md p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* Contact Information */}
-            <div>
+            <div data-aos="fade-right">
               <h2 className="text-2xl font-semibold text-purple-800 mb-6">
                 দোকানের তথ্য
               </h2>
@@ -122,7 +122,7 @@ const ContactPage = () => {
             </div>
 
             {/* Contact Form */}
-            <div>
+            <div data-aos="fade-left">
               <h2 className="text-2xl font-semibold text-purple-800 mb-6">
                 বার্তা পাঠান
               </h2>
@@ -175,7 +175,7 @@ const ContactPage = () => {
           </div>
 
           {/* Map Section */}
-          <div className="mt-12">
+          <div className="mt-12" data-aos="zoom-in">
             <h2 className="text-2xl font-semibold text-purple-800 mb-6">
               আমাদের অবস্থান
             </h2>
@@ -215,7 +215,7 @@ const ContactPage = () => {
           </div>
 
           {/* FAQ Section */}
-          <div className="mt-12">
+          <div className="mt-12" data-aos="fade-up">
             <h2 className="text-2xl font-semibold text-purple-800 mb-6">
               সচরাচর জিজ্ঞাসিত প্রশ্ন!
             </h2>

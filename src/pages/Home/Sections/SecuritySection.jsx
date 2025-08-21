@@ -21,7 +21,7 @@ const SecuritySection = () => {
     <section className="py-16 bg-white">
       <div className="container mx-auto px-4">
         <div className="flex flex-col md:flex-row items-center justify-between">
-          <div className="md:w-1/2 mb-8 md:mb-0">
+          <div className="md:w-1/2 mb-8 md:mb-0" data-aos="fade-left">
             <h2 className="text-3xl font-bold text-purple-900 mb-6">আপনার তথ্য সুরক্ষিত</h2>
             <p className="text-gray-700 mb-4">
               আমাদের সিস্টেমে আপনার এবং আপনার গ্রাহকদের সকল তথ্য সর্বোচ্চ সুরক্ষা ব্যবস্থায় সংরক্ষণ করা হয়।
@@ -34,7 +34,7 @@ const SecuritySection = () => {
               ))}
             </ul>
           </div>
-          <div className="md:w-2/5 bg-purple-100 p-8 rounded-lg">
+          <div className="md:w-2/5 bg-purple-100 p-8 rounded-lg" data-aos="fade-right">
             <h3 className="text-xl font-semibold mb-4">শুরু করতে চান?</h3>
             <p className="mb-4">আমাদের টিম আপনাকে সিস্টেম ব্যবহার শেখাতে সাহায্য করবে</p>
             <button className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-6 rounded-full transition duration-300">
