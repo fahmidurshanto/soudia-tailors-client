@@ -18,7 +18,9 @@ const HeroSection = () => {
             <Link to="/order" className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-8 rounded-full shadow-lg transition duration-300 flex items-center justify-center">
               নতুন অর্ডার তৈরি করুন
             </Link>
-       
+            <Link to="/admin/login" className="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-full shadow-lg transition duration-300 flex items-center justify-center text-sm">
+              অ্যাডমিন লগইন
+            </Link>
           </div>
         </div>
       </div>
