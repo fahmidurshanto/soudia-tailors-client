@@ -43,7 +43,13 @@ const orderSlice = createSlice({
       armLength: '',
       armWidth: '',
       bottomRound: '',
-      additionalNotes: ''
+      additionalNotes: '',
+      sketchData: null // Base64 image data from canvas
+    },
+    designReferences: {
+      capturedImages: [], // Array of base64 images from camera
+      uploadedFiles: [], // Array of uploaded file objects
+      designNotes: '' // Special design instructions
     },
     status: 'idle', // 'idle' | 'loading' | 'succeeded' | 'failed'
     error: null
@@ -54,6 +60,9 @@ const orderSlice = createSlice({
     },
     setMeasurements: (state, action) => {
       state.measurements = { ...state.measurements, ...action.payload };
+    },
+    setDesignReferences: (state, action) => {
+      state.designReferences = { ...state.designReferences, ...action.payload };
     },
     resetOrder: (state) => {
       state.customerData = {
@@ -70,7 +79,13 @@ const orderSlice = createSlice({
         armLength: '',
         armWidth: '',
         bottomRound: '',
-        additionalNotes: ''
+        additionalNotes: '',
+        sketchData: null
+      };
+      state.designReferences = {
+        capturedImages: [],
+        uploadedFiles: [],
+        designNotes: ''
       };
       state.status = 'idle';
       state.error = null;
@@ -92,7 +107,7 @@ const orderSlice = createSlice({
 });
 
 // Export the actions
-export const { setCustomerData, setMeasurements, resetOrder } = orderSlice.actions;
+export const { setCustomerData, setMeasurements, setDesignReferences, resetOrder } = orderSlice.actions;
 
 // Export the reducer
 export default orderSlice.reducer;

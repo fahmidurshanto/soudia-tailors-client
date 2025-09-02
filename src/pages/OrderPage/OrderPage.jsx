@@ -7,6 +7,7 @@ import ProgressIndicator from './Sections/ProgressIndicator';
 import { 
   setCustomerData, 
   setMeasurements, 
+  setDesignReferences,
   resetOrder,
   submitOrder 
 } from '../../features/order/orderSlice';
@@ -16,7 +17,7 @@ const OrderPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const dispatch = useDispatch();
   
-  const { customerData, measurements } = useSelector((state) => state.order);
+  const { customerData, measurements, designReferences } = useSelector((state) => state.order);
 
   const sections = [
     {
@@ -57,7 +58,11 @@ const OrderPage = () => {
     
     try {
       // Dispatch the async action
-      const resultAction = await dispatch(submitOrder({ customerData, measurements }));
+      const resultAction = await dispatch(submitOrder({ 
+        customerData, 
+        measurements, 
+        designReferences 
+      }));
       
       if (submitOrder.fulfilled.match(resultAction)) {
         alert('অর্ডারটি সফলভাবে জমা দেওয়া হয়েছে!');
@@ -105,7 +110,10 @@ const OrderPage = () => {
           )}
           
           {activeSection === 2 && (
-            <DesignReferenceSection />
+            <DesignReferenceSection 
+              designReferences={designReferences}
+              setDesignReferences={(data) => dispatch(setDesignReferences(data))}
+            />
           )}
 
           <div className="flex justify-between mt-10">

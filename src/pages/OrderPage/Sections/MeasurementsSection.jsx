@@ -1,4 +1,5 @@
 import React from 'react';
+import DigitalSketchpad from '../../../components/DigitalSketchpad';
 
 const MeasurementsSection = ({ measurements, setMeasurements }) => {
   const handleInputChange = (e) => {
@@ -8,9 +9,19 @@ const MeasurementsSection = ({ measurements, setMeasurements }) => {
     });
   };
 
+  const handleSketchChange = (sketchData) => {
+    setMeasurements({
+      ...measurements,
+      sketchData: sketchData
+    });
+  };
+
   return (
     <div className="space-y-6 animate__animated animate__fadeInLeft">
-      <h2 className="text-2xl font-semibold text-purple-800 mb-4">মাপ</h2>
+      <div className="text-center mb-6">
+        <h2 className="text-2xl font-semibold text-purple-800 mb-2">মাপ</h2>
+        <p className="text-gray-600">গ্রাহকের মাপ সংখ্যা এবং ডিজিটাল স্কেচের মাধ্যমে লিপিবদ্ধ করুন</p>
+      </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
@@ -145,19 +156,18 @@ const MeasurementsSection = ({ measurements, setMeasurements }) => {
           placeholder="যেকোনো বিশেষ নির্দেশিকা বা অতিরিক্ত নোট লিখুন"
         ></textarea>
       </div>
-      
-      <div className="bg-purple-50 p-4 rounded-lg">
-        <h3 className="font-semibold text-purple-800 mb-2">স্কেচ প্যাড</h3>
-        <p className="text-gray-600 mb-4">গ্রাহকের মাপ চিত্রের মাধ্যমে নির্দেশ করুন</p>
-        <div className="border-2 border-dashed border-gray-300 rounded-lg h-48 flex items-center justify-center">
-          <p className="text-gray-500">স্কেচ প্যাড এখানে লোড হবে</p>
-        </div>
-        <div className="flex mt-4 space-x-2">
-          <button className="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg">পেন</button>
-          <button className="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg">ইরেজার</button>
-          <button className="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg">ক্লিয়ার</button>
-        </div>
+
+      {/* Divider */}
+      <div className="flex items-center my-8">
+        <div className="flex-1 border-t border-gray-300"></div>
+        <div className="px-4 text-sm text-gray-500 font-medium">ডিজিটাল স্কেচ</div>
+        <div className="flex-1 border-t border-gray-300"></div>
       </div>
+      
+      <DigitalSketchpad 
+        onSketchChange={handleSketchChange}
+        initialSketch={measurements.sketchData?.paths}
+      />
     </div>
   );
 };

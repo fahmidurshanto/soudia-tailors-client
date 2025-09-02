@@ -11,7 +11,9 @@ import { Provider } from 'react-redux';
 
 AOS.init({
   duration: 1000,
-  once: true,
+  once: false, // Allow animations to re-trigger
+  mirror: true, // Re-animate elements when scrolling back
+  offset: 50, // Trigger animations earlier
 });
 
 createRoot(document.getElementById('root')).render(

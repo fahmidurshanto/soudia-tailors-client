@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { FaUser, FaLock, FaEye, FaEyeSlash, FaShieldAlt } from 'react-icons/fa';
-import { signInUser } from '../../features/auth/authSlice';
+import { signInUser, clearError } from '../../features/auth/authSlice';
 
 const AdminLoginPage = () => {
   const [formData, setFormData] = useState({
@@ -11,10 +11,20 @@ const AdminLoginPage = () => {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [formErrors, setFormErrors] = useState({});
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
   const { loading, error } = useSelector((state) => state.auth);
+  
+  // Get the page user was trying to access
+  const from = location.state?.from?.pathname || '/admin/dashboard';
+
+  // Clear any existing errors when component mounts
+  useEffect(() => {
+    dispatch(clearError());
+  }, [dispatch]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -29,6 +39,11 @@ const AdminLoginPage = () => {
         ...prev,
         [name]: ''
       }));
+    }
+    
+    // Clear Firebase error when user starts typing
+    if (error) {
+      dispatch(clearError());
     }
   };
 
@@ -59,17 +74,20 @@ const AdminLoginPage = () => {
     }
 
     try {
+      setIsLoggingIn(true);
       const resultAction = await dispatch(signInUser({
         email: formData.email,
         password: formData.password
       }));
       
       if (signInUser.fulfilled.match(resultAction)) {
-        // Redirect to admin dashboard (future implementation)
-        navigate('/admin/dashboard');
+        // Redirect to intended page or dashboard
+        navigate(from, { replace: true });
       }
     } catch (error) {
       console.error('Login error:', error);
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 
@@ -172,10 +190,10 @@ const AdminLoginPage = () => {
             {/* Submit Button */}
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || isLoggingIn}
               className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-purple-300 text-white font-semibold py-3 px-4 rounded-lg transition duration-300 flex items-center justify-center"
             >
-              {loading ? (
+              {loading || isLoggingIn ? (
                 <>
                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
                   লগইন হচ্ছে...

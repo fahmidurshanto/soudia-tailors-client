@@ -4,6 +4,8 @@ import Home from "../pages/Home/Home";
 import OrderPage from "../pages/OrderPage/OrderPage";
 import ContactPage from "../pages/ContactPage/ContactPage";
 import AdminLoginPage from "../pages/AdminLoginPage/AdminLoginPage";
+import AdminDashboard from "../pages/AdminDashboard/AdminDashboard";
+import ProtectedRoute from "../components/ProtectedRoute";
 
 const router = createBrowserRouter([
     {
@@ -25,6 +27,14 @@ const router = createBrowserRouter([
             {
                 path: "/admin/login",
                 element: <AdminLoginPage/>
+            },
+            {
+                path: "/admin/dashboard",
+                element: (
+                    <ProtectedRoute>
+                        <AdminDashboard/>
+                    </ProtectedRoute>
+                )
             }
         ]
     }

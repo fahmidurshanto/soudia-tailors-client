@@ -1,21 +1,56 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-// You'll need to import your firebase config here
-// import { auth } from '../../firebase/firebase.config';
-// import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
+import { auth } from '../../firebase/firebase.config';
+import { 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword, 
+  signOut,
+  onAuthStateChanged 
+} from 'firebase/auth';
 
 // Async thunk for signing in a user
 export const signInUser = createAsyncThunk(
   'auth/signInUser',
   async ({ email, password }, { rejectWithValue }) => {
     try {
-      // Replace this with your actual Firebase sign-in logic
-      // const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      // const user = userCredential.user;
-      // return { uid: user.uid, email: user.email };
-      console.log('Simulating sign in for', email, password);
-      return { uid: '123', email: email }; // a mock user object
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+      
+      // Get ID token for backend authentication
+      const idToken = await user.getIdToken();
+      
+      return { 
+        uid: user.uid, 
+        email: user.email,
+        displayName: user.displayName,
+        idToken: idToken
+      };
     } catch (error) {
-      return rejectWithValue(error.message);
+      console.error('Sign in error:', error);
+      
+      // Provide Bengali error messages
+      let errorMessage = 'লগইন করতে সমস্যা হয়েছে';
+      
+      switch (error.code) {
+        case 'auth/user-not-found':
+          errorMessage = 'এই ইমেইল দিয়ে কোন অ্যাকাউন্ট পাওয়া যায়নি';
+          break;
+        case 'auth/wrong-password':
+          errorMessage = 'ভুল পাসওয়ার্ড দেওয়া হয়েছে';
+          break;
+        case 'auth/invalid-email':
+          errorMessage = 'ইমেইল ঠিকানা সঠিক নয়';
+          break;
+        case 'auth/too-many-requests':
+          errorMessage = 'অনেকবার চেষ্টা করা হয়েছে। একটু পরে আবার চেষ্টা করুন';
+          break;
+        case 'auth/network-request-failed':
+          errorMessage = 'ইন্টারনেট সংযোগ চেক করুন';
+          break;
+        default:
+          errorMessage = error.message || 'লগইন করতে সমস্যা হয়েছে';
+      }
+      
+      return rejectWithValue(errorMessage);
     }
   }
 );
@@ -25,14 +60,39 @@ export const signUpUser = createAsyncThunk(
   'auth/signUpUser',
   async ({ email, password }, { rejectWithValue }) => {
     try {
-      // Replace this with your actual Firebase sign-up logic
-      // const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      // const user = userCredential.user;
-      // return { uid: user.uid, email: user.email };
-      console.log('Simulating sign up for', email, password);
-      return { uid: '123', email: email }; // a mock user object
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+      
+      // Get ID token for backend authentication
+      const idToken = await user.getIdToken();
+      
+      return { 
+        uid: user.uid, 
+        email: user.email,
+        displayName: user.displayName,
+        idToken: idToken
+      };
     } catch (error) {
-      return rejectWithValue(error.message);
+      console.error('Sign up error:', error);
+      
+      // Provide Bengali error messages
+      let errorMessage = 'অ্যাকাউন্ট তৈরি করতে সমস্যা হয়েছে';
+      
+      switch (error.code) {
+        case 'auth/email-already-in-use':
+          errorMessage = 'এই ইমেইল দিয়ে ইতিমধ্যে অ্যাকাউন্ট আছে';
+          break;
+        case 'auth/invalid-email':
+          errorMessage = 'ইমেইল ঠিকানা সঠিক নয়';
+          break;
+        case 'auth/weak-password':
+          errorMessage = 'পাসওয়ার্ড অন্তত ৬ অক্ষরের হতে হবে';
+          break;
+        default:
+          errorMessage = error.message || 'অ্যাকাউন্ট তৈরি করতে সমস্যা হয়েছে';
+      }
+      
+      return rejectWithValue(errorMessage);
     }
   }
 );
@@ -42,21 +102,50 @@ export const signOutUser = createAsyncThunk(
   'auth/signOutUser',
   async (_, { rejectWithValue }) => {
     try {
-      // Replace this with your actual Firebase sign-out logic
-      // await signOut(auth);
-      console.log('Simulating sign out');
+      await signOut(auth);
       return null;
     } catch (error) {
-      return rejectWithValue(error.message);
+      console.error('Sign out error:', error);
+      return rejectWithValue('লগআউট করতে সমস্যা হয়েছে');
     }
+  }
+);
+
+// Async thunk for checking auth state
+export const checkAuthState = createAsyncThunk(
+  'auth/checkAuthState',
+  async () => {
+    return new Promise((resolve) => {
+      const unsubscribe = onAuthStateChanged(auth, async (user) => {
+        if (user) {
+          try {
+            const idToken = await user.getIdToken();
+            const userData = {
+              uid: user.uid,
+              email: user.email,
+              displayName: user.displayName,
+              idToken: idToken
+            };
+            resolve(userData);
+          } catch (error) {
+            console.error('Error getting ID token:', error);
+            resolve(null);
+          }
+        } else {
+          resolve(null);
+        }
+        unsubscribe();
+      });
+    });
   }
 );
 
 const initialState = {
   user: null,
   isAuthenticated: false,
-  loading: false,
+  loading: true, // Start with loading true for auth state check
   error: null,
+  idToken: null
 };
 
 export const authSlice = createSlice({
@@ -64,12 +153,18 @@ export const authSlice = createSlice({
   initialState,
   reducers: {
     setUser: (state, action) => {
-        state.user = action.payload;
-        state.isAuthenticated = !!action.payload;
+      state.user = action.payload;
+      state.isAuthenticated = !!action.payload;
+      state.idToken = action.payload?.idToken || null;
     },
     clearAuth: (state) => {
-        state.user = null;
-        state.isAuthenticated = false;
+      state.user = null;
+      state.isAuthenticated = false;
+      state.idToken = null;
+      state.error = null;
+    },
+    clearError: (state) => {
+      state.error = null;
     }
   },
   extraReducers: (builder) => {
@@ -83,6 +178,8 @@ export const authSlice = createSlice({
         state.loading = false;
         state.user = action.payload;
         state.isAuthenticated = true;
+        state.idToken = action.payload.idToken;
+        state.error = null;
       })
       .addCase(signInUser.rejected, (state, action) => {
         state.loading = false;
@@ -97,6 +194,8 @@ export const authSlice = createSlice({
         state.loading = false;
         state.user = action.payload;
         state.isAuthenticated = true;
+        state.idToken = action.payload.idToken;
+        state.error = null;
       })
       .addCase(signUpUser.rejected, (state, action) => {
         state.loading = false;
@@ -111,14 +210,40 @@ export const authSlice = createSlice({
         state.loading = false;
         state.user = null;
         state.isAuthenticated = false;
+        state.idToken = null;
+        state.error = null;
       })
       .addCase(signOutUser.rejected, (state, action) => {
         state.loading = false;
+        state.error = action.payload;
+      })
+      // Check auth state reducers
+      .addCase(checkAuthState.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(checkAuthState.fulfilled, (state, action) => {
+        state.loading = false;
+        if (action.payload) {
+          state.user = action.payload;
+          state.isAuthenticated = true;
+          state.idToken = action.payload.idToken;
+        } else {
+          state.user = null;
+          state.isAuthenticated = false;
+          state.idToken = null;
+        }
+        state.error = null;
+      })
+      .addCase(checkAuthState.rejected, (state, action) => {
+        state.loading = false;
+        state.user = null;
+        state.isAuthenticated = false;
+        state.idToken = null;
         state.error = action.payload;
       });
   },
 });
 
-export const { setUser, clearAuth } = authSlice.actions;
+export const { setUser, clearAuth, clearError } = authSlice.actions;
 
 export default authSlice.reducer;
