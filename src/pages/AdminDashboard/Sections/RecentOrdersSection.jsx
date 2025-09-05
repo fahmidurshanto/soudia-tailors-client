@@ -51,24 +51,24 @@ const RecentOrdersSection = ({ orders, loading, onViewOrder, getStatusBadge }) =
           <tbody className="bg-white divide-y divide-gray-200">
             {orders.slice(0, 5).map((order) => (
               <tr 
-                key={order.id} 
+                key={order._id} 
                 className="hover:bg-gray-50 cursor-pointer"
                 onClick={() => onViewOrder(order)}
               >
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  #{order.id}
+                  #{order._id?.substring(0, 6)}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {order.customerName}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {order.phone}
+                  {order.phoneNumber}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   {getStatusBadge(order.status)}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {order.createdAt}
+                  {order.createdAt ? new Date(order.createdAt).toLocaleDateString('bn-BD') : ''}
                 </td>
               </tr>
             ))}

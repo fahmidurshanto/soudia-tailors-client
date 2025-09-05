@@ -1,5 +1,6 @@
-import  { useState } from 'react';
+import  { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
+import { useNavigate, useLocation } from 'react-router-dom';
 import CustomerInfoSection from './Sections/CustomerInfoSection';
 import MeasurementsSection from './Sections/MeasurementsSection';
 import DesignReferenceSection from './Sections/DesignReferenceSection';
@@ -9,15 +10,27 @@ import {
   setMeasurements, 
   setDesignReferences,
   resetOrder,
-  submitOrder 
+  submitOrder,
+  updateOrder
 } from '../../features/order/orderSlice';
 
 const OrderPage = () => {
   const [activeSection, setActiveSection] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editingOrderId, setEditingOrderId] = useState(null);
   const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const location = useLocation();
   
-  const { customerData, measurements, designReferences } = useSelector((state) => state.order);
+  const { customerData, measurements, designReferences, orders } = useSelector((state) => state.order);
+
+  // Check if we're in edit mode
+  useEffect(() => {
+    // If we're coming from the admin dashboard with an order to edit
+    if (location.state && location.state.orderId) {
+      setEditingOrderId(location.state.orderId);
+    }
+  }, [location]);
 
   const sections = [
     {
@@ -57,22 +70,54 @@ const OrderPage = () => {
     setIsSubmitting(true);
     
     try {
-      // Dispatch the async action
-      const resultAction = await dispatch(submitOrder({ 
-        customerData, 
-        measurements, 
-        designReferences 
-      }));
+      // Format the data to match backend expectations
+      const orderData = {
+        customerName: customerData.name,
+        phoneNumber: customerData.phone,
+        address: customerData.address,
+        totalAmount: customerData.totalAmount || 0,
+        measurementSketch: measurements.sketchData?.imageData || '', // Include canvas sketch data
+        measurements: {
+          length: measurements.length || '',
+          body: measurements.body || '',
+          waist: measurements.waist || '',
+          hip: measurements.hip || '',
+          leg: measurements.leg || '',
+          armLength: measurements.armLength || '',
+          armWidth: measurements.armWidth || '',
+          bottomRound: measurements.bottomRound || ''
+        },
+        sketchData: measurements.sketchData, // Include full sketch data object
+        designReference: [
+          ...designReferences.capturedImages.map(img => img.url),
+          ...designReferences.uploadedFiles.map(file => file.url)
+        ].filter(url => url), // Remove any null/undefined URLs
+        specialNotes: designReferences.designNotes
+      };
       
-      if (submitOrder.fulfilled.match(resultAction)) {
-        alert('অর্ডারটি সফলভাবে জমা দেওয়া হয়েছে!');
+      console.log('Submitting order data:', orderData); // Debug log
+      
+      let resultAction;
+      if (editingOrderId) {
+        // Update existing order
+        resultAction = await dispatch(updateOrder({ orderId: editingOrderId, orderData }));
+      } else {
+        // Create new order
+        resultAction = await dispatch(submitOrder(orderData));
+      }
+      
+      if ((editingOrderId ? updateOrder.fulfilled.match(resultAction) : submitOrder.fulfilled.match(resultAction))) {
+        alert(editingOrderId ? 'অর্ডারটি সফলভাবে আপডেট হয়েছে!' : 'অর্ডারটি সফলভাবে জমা দেওয়া হয়েছে!');
         dispatch(resetOrder());
         setActiveSection(0);
+        setEditingOrderId(null);
+        // Navigate back to admin dashboard
+        navigate('/admin/dashboard');
       } else {
-        throw new Error(resultAction.payload || 'অর্ডার জমা দিতে সমস্যা হয়েছে');
+        throw new Error(resultAction.payload || (editingOrderId ? 'অর্ডার আপডেট করতে সমস্যা হয়েছে' : 'অর্ডার জমা দিতে সমস্যা হয়েছে'));
       }
     } catch (error) {
-      alert(error.message || 'অর্ডার জমা দিতে সমস্যা হয়েছে। পরে আবার চেষ্টা করুন।');
+      alert(error.message || (editingOrderId ? 'অর্ডার আপডেট করতে সমস্যা হয়েছে। পরে আবার চেষ্টা করুন।' : 'অর্ডার জমা দিতে সমস্যা হয়েছে। পরে আবার চেষ্টা করুন।'));
       console.error('Order submission error:', error);
     } finally {
       setIsSubmitting(false);
@@ -82,12 +127,25 @@ const OrderPage = () => {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="container mx-auto px-4 max-w-4xl">
-        <h1 className="text-3xl font-bold text-center text-purple-900 mb-2">
-          নতুন অর্ডার
-        </h1>
-        <p className="text-center text-gray-600 mb-8">
-          গ্রাহকের তথ্য, মাপ এবং ডিজাইন রেফারেন্স যোগ করুন
-        </p>
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-3xl font-bold text-center text-purple-900 mb-2">
+              {editingOrderId ? 'অর্ডার সম্পাদনা' : 'নতুন অর্ডার'}
+            </h1>
+            <p className="text-center text-gray-600">
+              {editingOrderId ? 'অর্ডারের তথ্য সম্পাদনা করুন' : 'গ্রাহকের তথ্য, মাপ এবং ডিজাইন রেফারেন্স যোগ করুন'}
+            </p>
+          </div>
+          <button
+            onClick={() => {
+              dispatch(resetOrder());
+              navigate('/admin/dashboard');
+            }}
+            className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition"
+          >
+            ড্যাশবোর্ডে ফিরে যান
+          </button>
+        </div>
 
         <ProgressIndicator 
           sections={sections} 
@@ -139,7 +197,7 @@ const OrderPage = () => {
                 disabled={isSubmitting}
                 className="flex items-center px-5 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-green-300"
               >
-                {isSubmitting ? 'জমা হচ্ছে...' : 'অর্ডার জমা দিন'}
+                {isSubmitting ? (editingOrderId ? 'আপডেট হচ্ছে...' : 'জমা হচ্ছে...') : (editingOrderId ? 'অর্ডার আপডেট করুন' : 'অর্ডার জমা দিন')}
               </button>
             )}
           </div>

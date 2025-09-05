@@ -6,6 +6,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import AOS from 'aos';
 
 import { signOutUser } from '../../features/auth/authSlice';
+import { fetchOrders, updateOrderStatus, setOrderForEdit, resetOrder } from '../../features/order/orderSlice';
 import Modal from '../../components/Modal';
 import OrderDetailsModal from '../../components/OrderDetailsModal';
 import ReportModal from '../../components/ReportModal';
@@ -23,8 +24,6 @@ const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showOrderDetails, setShowOrderDetails] = useState(false);
@@ -41,6 +40,7 @@ const AdminDashboard = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { user, isAuthenticated, loading: authLoading } = useSelector((state) => state.auth);
+  const { orders, status: orderStatus } = useSelector((state) => state.order);
   
   // Debounced search for better performance
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
@@ -53,94 +53,25 @@ const AdminDashboard = () => {
     }
   }, [authLoading, isAuthenticated, navigate]);
 
-  // Mock data - replace with API calls when backend is ready
+  // Fetch orders from backend
   useEffect(() => {
-    const mockOrders = [
-      {
-        id: '001',
-        customerName: 'ফাতেমা খাতুন',
-        phone: '01712345678',
-        address: 'ঢাকা, বাংলাদেশ',
-        status: 'Pending',
-        createdAt: '2025-01-15',
-        deliveryDate: '2025-01-25',
-        totalAmount: 2500,
-        measurements: {
-          length: '42',
-          body: '36',
-          waist: '32',
-          hip: '38',
-          additionalNotes: 'একটু ঢিলা রাখতে হবে'
-        },
-        notes: 'জরুরি অর্ডার - তাড়াতাড়ি প্রয়োজন'
-      },
-      {
-        id: '002',
-        customerName: 'সালমা বেগম',
-        phone: '01987654321',
-        address: 'চট্টগ্রাম, বাংলাদেশ',
-        status: 'In Progress',
-        createdAt: '2025-01-14',
-        deliveryDate: '2025-01-24',
-        totalAmount: 3200,
-        measurements: {
-          length: '44',
-          body: '38',
-          waist: '34',
-          hip: '40'
-        }
-      },
-      {
-        id: '003',
-        customerName: 'রুবিনা আক্তার',
-        phone: '01556677889',
-        address: 'সিলেট, বাংলাদেশ',
-        status: 'Completed',
-        createdAt: '2025-01-13',
-        deliveryDate: '2025-01-20',
-        totalAmount: 2800,
-        measurements: {
-          length: '40',
-          body: '34',
-          waist: '30',
-          hip: '36'
-        }
-      },
-      {
-        id: '004',
-        customerName: 'নাসরিন সুলতানা',
-        phone: '01445566778',
-        address: 'রাজশাহী, বাংলাদেশ',
-        status: 'Pending',
-        createdAt: '2025-01-12',
-        deliveryDate: '2025-01-22',
-        totalAmount: 3500,
-        measurements: {
-          length: '43',
-          body: '37',
-          waist: '33',
-          hip: '39',
-          additionalNotes: 'হাতা একটু লম্বা করতে হবে'
-        }
-      }
-    ];
+    if (isAuthenticated && !authLoading) {
+      dispatch(fetchOrders());
+    }
+  }, [dispatch, isAuthenticated, authLoading]);
 
-    setTimeout(() => {
-      setOrders(mockOrders);
+  // Update stats when orders change
+  useEffect(() => {
+    if (orders && orders.length > 0) {
       setStats({
-        totalOrders: mockOrders.length,
-        pendingOrders: mockOrders.filter(o => o.status === 'Pending').length,
-        completedOrders: mockOrders.filter(o => o.status === 'Completed').length,
-        totalCustomers: mockOrders.length
+        totalOrders: orders.length,
+        pendingOrders: orders.filter(o => o.status === 'pending').length,
+        inProgressOrders: orders.filter(o => o.status === 'in-progress').length,
+        completedOrders: orders.filter(o => o.status === 'completed').length,
+        totalCustomers: orders.length
       });
-      setLoading(false);
-      
-      // Refresh AOS after data is loaded
-      setTimeout(() => {
-        AOS.refresh();
-      }, 100);
-    }, 1000);
-  }, []);
+    }
+  }, [orders]);
 
   // Refresh AOS when authentication state changes
   useEffect(() => {
@@ -172,10 +103,16 @@ const AdminDashboard = () => {
   };
 
   const handleEditOrder = (order) => {
+    // Set the order data in the Redux store for editing
+    dispatch(setOrderForEdit(order));
+    // Navigate to the order page with edit mode
+    navigate('/order', { state: { orderId: order._id } });
     toast.info(`${order.customerName} এর অর্ডার সম্পাদনার জন্য তৈরি`);
   };
 
   const handleNewOrder = () => {
+    // Reset the order form
+    dispatch(resetOrder());
     // Navigate to new order page
     navigate('/order');
     toast.success('নতুন অর্ডার পৃষ্ঠায় পুনর্নির্দেশিত হচ্ছে...');
@@ -263,10 +200,10 @@ const AdminDashboard = () => {
         <div class="summary">
           <h3>সারাংশ</h3>
           <p>মোট অর্ডার: ${orders.length}টি</p>
-          <p>অপেক্ষমান: ${orders.filter(o => o.status === 'Pending').length}টি</p>
-          <p>প্রক্রিয়াধীন: ${orders.filter(o => o.status === 'In Progress').length}টি</p>
-          <p>সম্পন্ন: ${orders.filter(o => o.status === 'Completed').length}টি</p>
-          <p>মোট আয়: ৳${orders.reduce((sum, order) => sum + order.totalAmount, 0)}</p>
+          <p>অপেক্ষমান: ${orders.filter(o => o.status === 'pending').length}টি</p>
+          <p>প্রক্রিয়াধীন: ${orders.filter(o => o.status === 'in-progress').length}টি</p>
+          <p>সম্পন্ন: ${orders.filter(o => o.status === 'completed').length}টি</p>
+          <p>মোট আয়: ৳${orders.reduce((sum, order) => sum + (order.totalAmount || 0), 0)}</p>
         </div>
         
         <table>
@@ -283,16 +220,16 @@ const AdminDashboard = () => {
           <tbody>
             ${orders.map(order => `
               <tr>
-                <td>#${order.id}</td>
+                <td>#${order._id?.substring(0, 6)}</td>
                 <td>${order.customerName}</td>
-                <td>${order.phone}</td>
+                <td>${order.phoneNumber}</td>
                 <td class="status-${order.status.toLowerCase().replace(' ', '')}">
-                  ${order.status === 'Pending' ? 'অপেক্ষমান' : 
-                    order.status === 'In Progress' ? 'প্রক্রিয়াধীন' : 
-                    order.status === 'Completed' ? 'সম্পন্ন' : order.status}
+                  ${order.status === 'pending' ? 'অপেক্ষমান' : 
+                    order.status === 'in-progress' ? 'প্রক্রিয়াধীন' : 
+                    order.status === 'completed' ? 'সম্পন্ন' : order.status}
                 </td>
-                <td>৳${order.totalAmount}</td>
-                <td>${order.createdAt}</td>
+                <td>৳${order.totalAmount || 0}</td>
+                <td>${new Date(order.createdAt).toLocaleDateString('bn-BD')}</td>
               </tr>
             `).join('')}
           </tbody>
@@ -339,16 +276,16 @@ const AdminDashboard = () => {
 
     orders.forEach(order => {
       let row = [
-        order.id,
-        `"${order.customerName}"`,
-        order.phone,
+        order._id?.substring(0, 6) || '',
+        `"${order.customerName || ''}"`,
+        order.phoneNumber || '',
         `"${order.address || ''}"`,
-        order.status === 'Pending' ? 'অপেক্ষমান' : 
-        order.status === 'In Progress' ? 'প্রক্রিয়াধীন' : 
-        order.status === 'Completed' ? 'সম্পন্ন' : order.status,
-        order.totalAmount,
-        order.createdAt,
-        order.deliveryDate || ''
+        order.status === 'pending' ? 'অপেক্ষমান' : 
+        order.status === 'in-progress' ? 'প্রক্রিয়াধীন' : 
+        order.status === 'completed' ? 'সম্পন্ন' : order.status,
+        order.totalAmount || 0,
+        order.createdAt ? new Date(order.createdAt).toLocaleDateString('bn-BD') : '',
+        order.deliveryDate ? new Date(order.deliveryDate).toLocaleDateString('bn-BD') : ''
       ];
 
       if (includeDetails) {
@@ -357,7 +294,7 @@ const AdminDashboard = () => {
           order.measurements?.body || '',
           order.measurements?.waist || '',
           order.measurements?.hip || '',
-          `"${order.measurements?.additionalNotes || order.notes || ''}"`
+          `"${order.specialNotes || order.notes || ''}"`
         ]);
       }
 
@@ -390,55 +327,34 @@ const AdminDashboard = () => {
 
   const confirmDeleteOrder = () => {
     if (orderToDelete) {
-      setOrders(prev => prev.filter(order => order.id !== orderToDelete.id));
-      toast.success(`অর্ডার #${orderToDelete.id} সফলভাবে মুছে ফেলা হয়েছে`);
+      // In a real implementation, you would call an API to delete the order
+      toast.success(`অর্ডার #${orderToDelete._id?.substring(0, 6)} সফলভাবে মুছে ফেলা হয়েছে`);
       setOrderToDelete(null);
       setShowDeleteModal(false);
-      
-      // Update stats
-      const updatedOrders = orders.filter(order => order.id !== orderToDelete.id);
-      setStats({
-        totalOrders: updatedOrders.length,
-        pendingOrders: updatedOrders.filter(o => o.status === 'Pending').length,
-        completedOrders: updatedOrders.filter(o => o.status === 'Completed').length,
-        totalCustomers: updatedOrders.length
-      });
     }
   };
 
-  const handleStatusUpdate = (orderId, newStatus) => {
-    setOrders(prev => prev.map(order => 
-      order.id === orderId 
-        ? { ...order, status: newStatus }
-        : order
-    ));
-    
-    const statusText = {
-      'In Progress': 'প্রক্রিয়াধীন',
-      'Completed': 'সম্পন্ন'
-    };
-    
-    toast.success(`অর্ডার #${orderId} স্ট্যাটাস ${statusText[newStatus]} এ পরিবর্তন করা হয়েছে`);
-    
-    // Update stats
-    const updatedOrders = orders.map(order => 
-      order.id === orderId ? { ...order, status: newStatus } : order
-    );
-    setStats({
-      totalOrders: updatedOrders.length,
-      pendingOrders: updatedOrders.filter(o => o.status === 'Pending').length,
-      completedOrders: updatedOrders.filter(o => o.status === 'Completed').length,
-      totalCustomers: updatedOrders.length
-    });
-    
-    setShowOrderDetails(false);
+  const handleStatusUpdate = async (orderId, newStatus) => {
+    try {
+      const resultAction = await dispatch(updateOrderStatus({ orderId, status: newStatus }));
+      
+      if (updateOrderStatus.fulfilled.match(resultAction)) {
+        toast.success(`অর্ডার #${orderId?.substring(0, 6)} স্ট্যাটাস পরিবর্তন করা হয়েছে`);
+        setShowOrderDetails(false);
+      } else {
+        throw new Error(resultAction.payload || 'স্ট্যাটাস পরিবর্তন করতে সমস্যা হয়েছে');
+      }
+    } catch (error) {
+      console.error('Status update error:', error);
+      toast.error(error.message || 'স্ট্যাটাস পরিবর্তন করতে সমস্যা হয়েছে');
+    }
   };
 
   const getStatusBadge = (status) => {
     const statusMap = {
-      'Pending': { text: 'অপেক্ষমান', color: 'bg-yellow-100 text-yellow-800' },
-      'In Progress': { text: 'প্রক্রিয়াধীন', color: 'bg-blue-100 text-blue-800' },
-      'Completed': { text: 'সম্পন্ন', color: 'bg-green-100 text-green-800' }
+      'pending': { text: 'অপেক্ষমান', color: 'bg-yellow-100 text-yellow-800' },
+      'in-progress': { text: 'প্রক্রিয়াধীন', color: 'bg-blue-100 text-blue-800' },
+      'completed': { text: 'সম্পন্ন', color: 'bg-green-100 text-green-800' }
     };
     
     const statusInfo = statusMap[status] || { text: status, color: 'bg-gray-100 text-gray-800' };
@@ -452,16 +368,16 @@ const AdminDashboard = () => {
 
   // Filter orders based on search and status
   const filteredOrders = orders.filter(order => {
-    const matchesSearch = order.customerName.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
-                         order.phone.includes(debouncedSearchTerm) ||
-                         order.id.toString().includes(debouncedSearchTerm) ||
+    const matchesSearch = order.customerName?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+                         order.phoneNumber?.includes(debouncedSearchTerm) ||
+                         order._id?.toString().includes(debouncedSearchTerm) ||
                          (order.address && order.address.toLowerCase().includes(debouncedSearchTerm.toLowerCase()));
     const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
   // Show loading screen while authentication is being checked
-  if (authLoading) {
+  if (authLoading || orderStatus === 'loading') {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -498,13 +414,13 @@ const AdminDashboard = () => {
             {/* Stats Cards */}
             <StatsSection 
               stats={stats}
-              loading={loading}
+              loading={orderStatus === 'loading'}
             />
 
             {/* Recent Orders */}
             <RecentOrdersSection 
               orders={orders}
-              loading={loading}
+              loading={orderStatus === 'loading'}
               onViewOrder={handleViewOrder}
               getStatusBadge={getStatusBadge}
             />
@@ -528,7 +444,7 @@ const AdminDashboard = () => {
             {/* Orders Table */}
             <OrdersTableSection 
               orders={filteredOrders}
-              loading={loading}
+              loading={orderStatus === 'loading'}
               onViewOrder={handleViewOrder}
               onEditOrder={handleEditOrder}
               onDeleteOrder={handleDeleteOrder}
@@ -562,7 +478,7 @@ const AdminDashboard = () => {
         onClose={() => setShowDeleteModal(false)}
         onConfirm={confirmDeleteOrder}
         title="অর্ডার মুছে ফেলার নিশ্চিতকরণ"
-        message={`আপনি কি নিশ্চিত যে অর্ডার #${orderToDelete?.id} (${orderToDelete?.customerName}) মুছে ফেলতে চান? এই কাজটি পূর্বাবস্থায় ফেরানো যাবে না।`}
+        message={`আপনি কি নিশ্চিত যে অর্ডার #${orderToDelete?._id?.substring(0, 6)} (${orderToDelete?.customerName}) মুছে ফেলতে চান? এই কাজটি পূর্বাবস্থায় ফেরানো যাবে না।`}
         confirmText="মুছে ফেলুন"
         cancelText="বাতিল"
       />

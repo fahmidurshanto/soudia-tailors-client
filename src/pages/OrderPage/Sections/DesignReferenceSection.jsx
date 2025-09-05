@@ -8,14 +8,19 @@ const DesignReferenceSection = ({ designReferences, setDesignReferences }) => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleCameraCapture = async (imageData) => {
+  const handleCameraCapture = async (cloudinaryData) => {
     try {
       setIsLoading(true);
       const newImage = {
-        id: Date.now() + Math.random(),
-        data: imageData,
+        id: cloudinaryData.id,
+        url: cloudinaryData.url,
+        thumbnailUrl: cloudinaryData.thumbnailUrl,
+        cloudinaryId: cloudinaryData.cloudinaryId,
         type: 'camera',
-        timestamp: new Date().toISOString()
+        format: cloudinaryData.format,
+        width: cloudinaryData.width,
+        height: cloudinaryData.height,
+        timestamp: cloudinaryData.uploadedAt || new Date().toISOString()
       };
       
       const updatedImages = [...designReferences.capturedImages, newImage];
@@ -30,13 +35,21 @@ const DesignReferenceSection = ({ designReferences, setDesignReferences }) => {
     }
   };
 
-  const handleFileUpload = async (files) => {
+  const handleFileUpload = async (cloudinaryFiles) => {
     try {
       setIsLoading(true);
-      const newFiles = files.map(file => ({
-        ...file,
+      const newFiles = cloudinaryFiles.map(file => ({
+        id: file.id,
+        name: file.name || file.id.split('/').pop(),
+        url: file.url,
+        thumbnailUrl: file.thumbnailUrl,
+        cloudinaryId: file.cloudinaryId,
         type: 'upload',
-        timestamp: new Date().toISOString()
+        format: file.format,
+        width: file.width,
+        height: file.height,
+        size: file.size,
+        timestamp: file.uploadedAt || new Date().toISOString()
       }));
       
       const updatedFiles = [...designReferences.uploadedFiles, ...newFiles];
@@ -139,21 +152,37 @@ const DesignReferenceSection = ({ designReferences, setDesignReferences }) => {
       {/* Image Gallery */}
       {allImages.length > 0 && (
         <div>
-          <h3 className="font-semibold text-gray-700 mb-4">আপলোড করা ফাইলসমূহ ({allImages.length})</h3>
+          <h3 className="font-semibold text-gray-700 mb-4 flex items-center">
+            আপলোড করা ফাইলসমূহ ({allImages.length})
+            <span className="ml-2 px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+              ক্লাউডিনারি স্টোরেজ
+            </span>
+          </h3>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {allImages.map((item) => (
-              <div key={item.id} className="relative group border rounded-lg overflow-hidden hover:shadow-md transition-shadow">
-                <div className="aspect-square bg-gray-100 flex items-center justify-center">
-                  {item.type === 'camera' || item.data?.startsWith('data:image') ? (
+              <div 
+                key={item.id} 
+                className="relative group border rounded-lg overflow-hidden hover:shadow-lg transition-all duration-200 cursor-pointer"
+                onClick={() => setSelectedImage(item)}
+              >
+                <div className="aspect-square bg-gray-100 flex items-center justify-center overflow-hidden">
+                  {item.url ? (
                     <img
-                      src={item.data}
-                      alt="Design reference"
-                      className="w-full h-full object-cover"
+                      src={item.thumbnailUrl || item.url}
+                      alt={`Design reference - ${item.name || item.id}`}
+                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-200"
+                      loading="lazy"
+                      onError={(e) => {
+                        // Fallback to main URL if thumbnail fails
+                        if (e.target.src !== item.url) {
+                          e.target.src = item.url;
+                        }
+                      }}
                     />
                   ) : (
                     <div className="text-center p-4">
                       <FaUpload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                      <p className="text-xs text-gray-600 truncate">{item.name}</p>
+                      <p className="text-xs text-gray-600 truncate">{item.name || 'ফাইল'}</p>
                       {item.size && (
                         <p className="text-xs text-gray-500">{formatFileSize(item.size)}</p>
                       )}
@@ -162,17 +191,25 @@ const DesignReferenceSection = ({ designReferences, setDesignReferences }) => {
                 </div>
                 
                 {/* Overlay controls */}
-                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all flex items-center justify-center">
+                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all flex items-center justify-center">
                   <div className="opacity-0 group-hover:opacity-100 transition-opacity flex space-x-2">
                     <button
-                      onClick={() => setSelectedImage(item)}
-                      className="p-2 bg-white rounded-full hover:bg-gray-100 transition-colors"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedImage(item);
+                      }}
+                      className="p-2 bg-white rounded-full hover:bg-gray-100 transition-colors shadow-lg"
+                      title="প্রিভিউ দেখুন"
                     >
                       <FaEye className="text-gray-700" />
                     </button>
                     <button
-                      onClick={() => removeImage(item.id, item.type)}
-                      className="p-2 bg-white rounded-full hover:bg-gray-100 transition-colors"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeImage(item.id, item.type);
+                      }}
+                      className="p-2 bg-white rounded-full hover:bg-gray-100 transition-colors shadow-lg"
+                      title="মুছে ফেলুন"
                     >
                       <FaTrash className="text-red-600" />
                     </button>
@@ -181,12 +218,22 @@ const DesignReferenceSection = ({ designReferences, setDesignReferences }) => {
                 
                 {/* Type indicator */}
                 <div className="absolute top-2 left-2">
-                  <span className={`px-2 py-1 rounded text-xs text-white ${
+                  <span className={`px-2 py-1 rounded text-xs font-medium text-white shadow-lg ${
                     item.type === 'camera' ? 'bg-green-500' : 'bg-blue-500'
                   }`}>
                     {item.type === 'camera' ? 'ক্যামেরা' : 'আপলোড'}
                   </span>
                 </div>
+                
+                {/* Loading overlay for new uploads */}
+                {isLoading && (
+                  <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center">
+                    <div className="text-center">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-600 mx-auto mb-2"></div>
+                      <p className="text-xs text-gray-600">প্রসেস হচ্ছে...</p>
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -223,33 +270,69 @@ const DesignReferenceSection = ({ designReferences, setDesignReferences }) => {
       {/* Image Preview Modal */}
       {selectedImage && (
         <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50" onClick={() => setSelectedImage(null)}>
-          <div className="max-w-4xl max-h-[90vh] p-4">
+          <div className="max-w-4xl max-h-[90vh] p-4" onClick={e => e.stopPropagation()}>
             <div className="bg-white rounded-lg overflow-hidden">
               <div className="flex justify-between items-center p-4 border-b">
-                <h3 className="font-semibold">ডিজাইন প্রিভিউ</h3>
+                <div>
+                  <h3 className="font-semibold text-lg">ডিজাইন প্রিভিউ</h3>
+                  <p className="text-sm text-gray-600">
+                    {selectedImage.name || selectedImage.id?.split('/').pop()} 
+                    {selectedImage.size && ` • ${formatFileSize(selectedImage.size)}`}
+                    {selectedImage.width && selectedImage.height && ` • ${selectedImage.width}x${selectedImage.height}`}
+                  </p>
+                </div>
                 <button
                   onClick={() => setSelectedImage(null)}
-                  className="p-2 hover:bg-gray-100 rounded-full"
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
                 >
                   <FaTimes className="text-gray-600" />
                 </button>
               </div>
               <div className="p-4">
-                {selectedImage.data?.startsWith('data:image') ? (
+                {selectedImage.url ? (
                   <img
-                    src={selectedImage.data}
+                    src={selectedImage.url}
                     alt="Design preview"
-                    className="max-w-full max-h-[70vh] object-contain mx-auto"
+                    className="max-w-full max-h-[70vh] object-contain mx-auto rounded-lg shadow-lg"
+                    loading="lazy"
                   />
                 ) : (
                   <div className="text-center p-8">
                     <FaUpload className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                    <p className="text-lg font-medium">{selectedImage.name}</p>
+                    <p className="text-lg font-medium">{selectedImage.name || 'ফাইল'}</p>
                     {selectedImage.size && (
                       <p className="text-gray-600">{formatFileSize(selectedImage.size)}</p>
                     )}
+                    <p className="text-sm text-gray-500 mt-2">প্রিভিউ উপলব্ধ নেই</p>
                   </div>
                 )}
+              </div>
+              
+              {/* Image Info Footer */}
+              <div className="px-4 py-3 bg-gray-50 border-t">
+                <div className="flex flex-wrap gap-4 text-sm text-gray-600">
+                  <span className={`px-2 py-1 rounded text-xs font-medium ${
+                    selectedImage.type === 'camera' 
+                      ? 'bg-green-100 text-green-800' 
+                      : 'bg-blue-100 text-blue-800'
+                  }`}>
+                    {selectedImage.type === 'camera' ? 'ক্যামেরা থেকে' : 'আপলোড করা'}
+                  </span>
+                  {selectedImage.format && (
+                    <span className="text-gray-500">ফরম্যাট: {selectedImage.format.toUpperCase()}</span>
+                  )}
+                  {selectedImage.timestamp && (
+                    <span className="text-gray-500">
+                      {new Date(selectedImage.timestamp).toLocaleDateString('bn-BD', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
           </div>

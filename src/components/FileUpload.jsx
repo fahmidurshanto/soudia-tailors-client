@@ -1,11 +1,13 @@
 import React, { useRef, useState } from 'react';
-import { FaUpload, FaTimes, FaFile, FaImage, FaFilePdf, FaTrash } from 'react-icons/fa';
+import { FaUpload, FaTimes, FaFile, FaImage, FaFilePdf, FaTrash, FaCloudUploadAlt } from 'react-icons/fa';
+import { uploadMultipleToCloudinary } from '../services/cloudinaryService';
 
 const FileUpload = ({ onFileUpload, maxFiles = 5, acceptedTypes = ['image/*', 'application/pdf'] }) => {
   const fileInputRef = useRef(null);
   const [dragActive, setDragActive] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   const handleFiles = async (files) => {
     const fileArray = Array.from(files);
@@ -35,35 +37,51 @@ const FileUpload = ({ onFileUpload, maxFiles = 5, acceptedTypes = ['image/*', 'a
     try {
       setIsLoading(true);
       setError(null);
+      setUploadProgress(0);
 
-      // Process files and convert to base64 for preview
-      const processedFiles = await Promise.all(
-        validFiles.map(async (file) => {
-          return new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-              resolve({
-                id: Date.now() + Math.random(),
-                name: file.name,
-                size: file.size,
-                type: file.type,
-                data: e.target.result,
-                lastModified: file.lastModified
-              });
-            };
-            reader.readAsDataURL(file);
-          });
-        })
-      );
+      // Upload to Cloudinary
+      const uploadResult = await uploadMultipleToCloudinary(validFiles, {
+        folder: 'borkha-designs',
+        quality: 'auto',
+        format: 'auto',
+        onProgress: (progress) => {
+          setUploadProgress(progress);
+        }
+      });
 
-      if (onFileUpload) {
-        await onFileUpload(processedFiles);
+      if (uploadResult.success) {
+        // Process successful uploads
+        const processedFiles = uploadResult.successful.map((cloudinaryFile) => ({
+          id: cloudinaryFile.id,
+          name: cloudinaryFile.id.split('/').pop(),
+          size: cloudinaryFile.originalSize,
+          type: 'image',
+          url: cloudinaryFile.url,
+          thumbnailUrl: cloudinaryFile.thumbnailUrl,
+          cloudinaryId: cloudinaryFile.id,
+          format: cloudinaryFile.format,
+          width: cloudinaryFile.width,
+          height: cloudinaryFile.height,
+          uploadedAt: cloudinaryFile.createdAt
+        }));
+
+        if (onFileUpload) {
+          await onFileUpload(processedFiles);
+        }
+
+        // Show success message
+        if (uploadResult.totalFailed > 0) {
+          setError(`${uploadResult.totalUploaded}টি ফাইল সফলভাবে আপলোড হয়েছে, ${uploadResult.totalFailed}টি ব্যর্থ হয়েছে।`);
+        }
+      } else {
+        setError(uploadResult.error || 'ফাইল আপলোড করতে সমস্যা হয়েছে।');
       }
     } catch (err) {
       console.error('File upload error:', err);
       setError('ফাইল আপলোড করতে সমস্যা হয়েছে।');
     } finally {
       setIsLoading(false);
+      setUploadProgress(0);
     }
   };
 
@@ -140,8 +158,20 @@ const FileUpload = ({ onFileUpload, maxFiles = 5, acceptedTypes = ['image/*', 'a
 
         {isLoading ? (
           <div className="flex flex-col items-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mb-4"></div>
-            <p className="text-gray-600">ফাইল আপলোড হচ্ছে...</p>
+            <div className="relative mb-4">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+              <FaCloudUploadAlt className="absolute inset-0 m-auto h-6 w-6 text-purple-600" />
+            </div>
+            <p className="text-gray-600 mb-2">ক্লাউডিনারিতে আপলোড হচ্ছে...</p>
+            {uploadProgress > 0 && (
+              <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+                <div 
+                  className="bg-purple-600 h-2 rounded-full transition-all duration-300" 
+                  style={{ width: `${uploadProgress}%` }}
+                ></div>
+              </div>
+            )}
+            <p className="text-sm text-gray-500">অনুগ্রহ করে অপেক্ষা করুন...</p>
           </div>
         ) : (
           <div className="flex flex-col items-center">
@@ -173,6 +203,7 @@ const FileUpload = ({ onFileUpload, maxFiles = 5, acceptedTypes = ['image/*', 'a
           <li>• ডকুমেন্ট: PDF ফাইল সাপোর্টেড</li>
           <li>• প্রতিটি ফাইল ৫MB এর কম হতে হবে</li>
           <li>• একসাথে সর্বোচ্চ {maxFiles}টি ফাইল আপলোড করতে পারবেন</li>
+          <li>• ফাইলগুলো ক্লাউডিনারিতে সুরক্ষিত থাকবে</li>
         </ul>
       </div>
     </div>

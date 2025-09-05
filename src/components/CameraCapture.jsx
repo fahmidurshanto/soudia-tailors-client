@@ -1,5 +1,6 @@
 import React, { useRef, useState, useCallback, useEffect } from 'react';
-import { FaCamera, FaTimes, FaRedo, FaCheck, FaInfoCircle } from 'react-icons/fa';
+import { FaCamera, FaTimes, FaRedo, FaCheck, FaInfoCircle, FaCloudUploadAlt } from 'react-icons/fa';
+import { uploadToCloudinary } from '../services/cloudinaryService';
 
 // Webcam component will be loaded dynamically
 let WebcamComponent = null;
@@ -64,12 +65,43 @@ const CameraCapture = ({ onCapture, onClose, isOpen }) => {
     if (capturedImage && onCapture) {
       try {
         setIsLoading(true);
-        await onCapture(capturedImage);
-        setCapturedImage(null);
-        onClose();
+        setError(null);
+        
+        // Convert base64 to blob for Cloudinary upload
+        const response = await fetch(capturedImage);
+        const blob = await response.blob();
+        const file = new File([blob], `camera-capture-${Date.now()}.jpg`, { type: 'image/jpeg' });
+        
+        // Upload to Cloudinary
+        const uploadResult = await uploadToCloudinary(file, {
+          folder: 'borkha-designs/camera-captures',
+          quality: 'auto',
+          format: 'auto'
+        });
+        
+        if (uploadResult.success) {
+          // Pass Cloudinary data to parent
+          const cloudinaryData = {
+            id: uploadResult.data.id,
+            url: uploadResult.data.url,
+            thumbnailUrl: uploadResult.data.thumbnailUrl,
+            cloudinaryId: uploadResult.data.id,
+            type: 'camera',
+            format: uploadResult.data.format,
+            width: uploadResult.data.width,
+            height: uploadResult.data.height,
+            uploadedAt: uploadResult.data.createdAt
+          };
+          
+          await onCapture(cloudinaryData);
+          setCapturedImage(null);
+          onClose();
+        } else {
+          setError(uploadResult.error || 'ছবি আপলোড করতে সমস্যা হয়েছে।');
+        }
       } catch (err) {
-        console.error('Save error:', err);
-        setError('ছবি সেভ করতে সমস্যা হয়েছে।');
+        console.error('Camera upload error:', err);
+        setError('ছবি আপলোড করতে সমস্যা হয়েছে।');
       } finally {
         setIsLoading(false);
       }
@@ -190,8 +222,11 @@ const CameraCapture = ({ onCapture, onClose, isOpen }) => {
             {isLoading && (
               <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
                 <div className="bg-white rounded-lg p-4 flex items-center space-x-3">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-600"></div>
-                  <span className="text-gray-700">সেভ হচ্ছে...</span>
+                  <div className="relative">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-600"></div>
+                    <FaCloudUploadAlt className="absolute inset-0 m-auto h-3 w-3 text-purple-600" />
+                  </div>
+                  <span className="text-gray-700">ক্লাউডিনারিতে আপলোড হচ্ছে...</span>
                 </div>
               </div>
             )}

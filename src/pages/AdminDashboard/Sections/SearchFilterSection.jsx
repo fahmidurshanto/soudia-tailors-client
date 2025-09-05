@@ -31,9 +31,9 @@ const SearchFilterSection = ({
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
           >
             <option value="all">সব অবস্থা</option>
-            <option value="Pending">অপেক্ষমান</option>
-            <option value="In Progress">প্রক্রিয়াধীন</option>
-            <option value="Completed">সম্পন্ন</option>
+            <option value="pending">অপেক্ষমান</option>
+            <option value="in-progress">প্রক্রিয়াধীন</option>
+            <option value="completed">সম্পন্ন</option>
           </select>
         </div>
         <button 

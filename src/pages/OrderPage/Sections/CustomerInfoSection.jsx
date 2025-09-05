@@ -1,9 +1,19 @@
 const CustomerInfoSection = ({ customerData, setCustomerData }) => {
   const handleInputChange = (e) => {
-    setCustomerData({
-      ...customerData,
-      [e.target.name]: e.target.value
-    });
+    const { name, value } = e.target;
+    // For totalAmount, ensure it's a number
+    if (name === 'totalAmount') {
+      const numericValue = value === '' ? '' : parseFloat(value) || 0;
+      setCustomerData({
+        ...customerData,
+        [name]: numericValue
+      });
+    } else {
+      setCustomerData({
+        ...customerData,
+        [name]: value
+      });
+    }
   };
 
   return (
@@ -52,6 +62,25 @@ const CustomerInfoSection = ({ customerData, setCustomerData }) => {
           rows="3"
           placeholder="গ্রাহকের সম্পূর্ণ ঠিকানা লিখুন"
         ></textarea>
+      </div>
+      
+      <div>
+        <label className="block text-gray-700 mb-2">মোট পরিমাণ (৳)</label>
+        <div className="relative">
+          <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">
+            ৳
+          </span>
+          <input
+            type="number"
+            name="totalAmount"
+            value={customerData.totalAmount}
+            onChange={handleInputChange}
+            className="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
+            placeholder="0.00"
+            min="0"
+            step="0.01"
+          />
+        </div>
       </div>
     </div>
   );
