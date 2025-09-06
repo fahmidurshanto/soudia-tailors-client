@@ -6,6 +6,7 @@ import ContactPage from "../pages/ContactPage/ContactPage";
 import AdminLoginPage from "../pages/AdminLoginPage/AdminLoginPage";
 import AdminDashboard from "../pages/AdminDashboard/AdminDashboard";
 import ProtectedRoute from "../components/ProtectedRoute";
+import Error from "../pages/Error/Error";
 
 const router = createBrowserRouter([
     {
@@ -36,7 +37,8 @@ const router = createBrowserRouter([
                     </ProtectedRoute>
                 )
             }
-        ]
+        ],
+        errorElement: <Error />
     }
 ])
 
