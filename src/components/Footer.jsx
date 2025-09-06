@@ -9,13 +9,13 @@ const Footer = () => {
           <div>
             <h3 className="text-xl font-bold mb-4 text-violet-900">সৌদিয়া টেইলর্স</h3>
             <p className="text-violet-800">
-              আপনার পছন্দ অনুযায়ী কাপড়ের নকশা এবং মেপ করে সেলাই করে দেওয়া হয়।
+              আপনার পছন্দ অনুযায়ী কাপড়ের নকশা এবং মাপ করে সেলাই করে দেওয়া হয়।
             </p>
           </div>
 
           {/* Quick Links */}
           <div>
-            <h4 className="text-lg font-semibold mb-4 text-violet-900">দ্রুত লিংক</h4>
+            <h4 className="text-lg font-semibold mb-4 text-violet-900">কুইক লিংক</h4>
             <ul className="space-y-2">
               <li>
                 <Link to="/" className="text-violet-800 hover:text-violet-600 transition-colors duration-300">
