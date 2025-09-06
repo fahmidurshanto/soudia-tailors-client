@@ -3,7 +3,7 @@ import 'animate.css';
 
 const Navbar = () => {
   return (
-    <nav className="fixed top-4 right-4 z-50">
+    <nav className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50">
       <div className="backdrop-blur-lg bg-white/30 border border-white/20 rounded-xl shadow-lg animate__animated animate__fadeInDown">
         <div className="px-4 py-3">
           <div className="flex space-x-6">
